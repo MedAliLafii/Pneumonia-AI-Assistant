@@ -12,4 +12,3 @@ numpy==1.24.3
 opencv-python==4.8.1.78
 werkzeug==3.0.1
 h5py==3.10.0
--e .

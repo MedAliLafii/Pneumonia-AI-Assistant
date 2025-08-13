@@ -20,6 +20,13 @@ class PneumoniaPredictor:
     def load_model(self):
         """Load the trained CNN model."""
         try:
+            # Check if model file exists (for Vercel deployment)
+            if not os.path.exists(self.model_path):
+                print(f"⚠️  Model file not found: {self.model_path}")
+                print("💡 This is expected in Vercel deployment. Model will be loaded on first use.")
+                self.model = None
+                return
+            
             # Try loading with custom_objects to handle compatibility issues
             custom_objects = {}
             
@@ -196,9 +203,13 @@ class PneumoniaPredictor:
         Returns:
             dict: Prediction results with confidence scores
         """
+        # Try to load model if not already loaded
+        if self.model is None:
+            self.load_model()
+        
         if self.model is None:
             return {
-                "error": "Model not loaded. Please check TensorFlow compatibility.",
+                "error": "Model not available. This feature requires the model file which is not included in the deployment.",
                 "prediction": None,
                 "confidence": 0.0
             }

@@ -1,0 +1,40 @@
+# Large model files that exceed Vercel limits
+models/
+faiss_index/
+data/
+uploads/
+
+# Development files
+.git/
+.github/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Test files
+test_*.py
+*_test.py
+
+# Documentation
+README.md
+LICENSE

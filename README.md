@@ -112,6 +112,10 @@ A comprehensive medical AI assistant that combines natural language processing a
 
 ⚠️ **Medical Disclaimer**: This application is for educational and research purposes only. The AI analysis should not be used as a substitute for professional medical diagnosis. Always consult with qualified healthcare professionals for medical decisions.
 
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
 ## Author
 
 Mohamed Ali Lafi - mohamedali.lafi@gmail.com
