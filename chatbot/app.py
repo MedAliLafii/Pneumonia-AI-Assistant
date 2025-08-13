@@ -20,13 +20,13 @@ os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 CNN_APP_URL = os.getenv('CNN_APP_URL', 'http://localhost:5001')
 CHATBOT_APP_URL = os.getenv('CHATBOT_APP_URL', 'http://localhost:5000')
 
-# Initialize components (will be lazy loaded)
+# Initialize components
 embeddings = None
 docsearch = None
 rag_chain = None
 
 def initialize_components():
-    """Initialize components lazily to avoid cold start issues"""
+    """Initialize components"""
     global embeddings, docsearch, rag_chain
     
     if embeddings is None:
@@ -79,6 +79,11 @@ def initialize_components():
         question_answer_chain = create_stuff_documents_chain(chatModel, prompt)
         rag_chain = create_retrieval_chain(retriever, question_answer_chain)
 
+# Initialize components immediately when app starts
+print("🚀 Initializing AI Medical Assistant...")
+initialize_components()
+print("✅ AI Medical Assistant ready!")
+
 @app.route("/")
 def index():
     """Main route - chatbot page"""
@@ -89,7 +94,6 @@ def index():
 @app.route("/get", methods=["GET", "POST"])
 def chat():
     try:
-        initialize_components()
         if rag_chain is None:
             return "Chatbot is not available at the moment. Please try again later."
         
@@ -113,7 +117,6 @@ def chat():
 def health_check():
     """Health check endpoint to verify all components are working."""
     try:
-        initialize_components()
         status = {
             "chatbot": "✅ Ready" if rag_chain is not None else "❌ Not loaded",
             "faiss_index": "✅ Ready" if docsearch is not None else "❌ Not loaded",
