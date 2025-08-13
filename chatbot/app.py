@@ -26,63 +26,72 @@ docsearch = None
 rag_chain = None
 
 def initialize_components():
-    """Initialize components"""
+    """Initialize components with error handling"""
     global embeddings, docsearch, rag_chain
     
-    if embeddings is None:
-        embeddings = download_hugging_face_embeddings()
-    
-    if docsearch is None:
-        # Only try to load existing FAISS index, never create new one
-        try:
-            docsearch = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
-            print("✅ Loaded existing FAISS index")
-        except Exception as e:
-            print(f"❌ No existing FAISS index found: {e}")
-            # Create a minimal fallback with basic medical information
-            from langchain_core.documents import Document
-            fallback_content = """
-            Pneumonia is an infection that inflames the air sacs in one or both lungs. 
-            The air sacs may fill with fluid or pus, causing cough with phlegm or pus, fever, chills, and difficulty breathing.
+    try:
+        if embeddings is None:
+            print("🔄 Loading embeddings...")
+            embeddings = download_hugging_face_embeddings()
+            print("✅ Embeddings loaded")
+        
+        if docsearch is None:
+            # Only try to load existing FAISS index, never create new one
+            try:
+                print("🔄 Loading FAISS index...")
+                docsearch = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
+                print("✅ Loaded existing FAISS index")
+            except Exception as e:
+                print(f"❌ No existing FAISS index found: {e}")
+                # Create a minimal fallback with basic medical information
+                from langchain_core.documents import Document
+                fallback_content = """
+                Pneumonia is an infection that inflames the air sacs in one or both lungs. 
+                The air sacs may fill with fluid or pus, causing cough with phlegm or pus, fever, chills, and difficulty breathing.
+                
+                Common symptoms include:
+                - Cough with phlegm or pus
+                - Fever, sweating and shaking chills
+                - Shortness of breath
+                - Rapid, shallow breathing
+                - Sharp or stabbing chest pain that gets worse when you breathe deeply or cough
+                - Loss of appetite, low energy, and fatigue
+                - Nausea and vomiting, especially in small children
+                - Confusion, especially in older people
+                
+                Risk factors include:
+                - Age (children under 2 and adults over 65)
+                - Smoking
+                - Chronic diseases (asthma, COPD, heart disease)
+                - Weakened immune system
+                - Recent surgery or hospitalization
+                
+                Treatment typically involves antibiotics for bacterial pneumonia, rest, and supportive care.
+                """
+                docsearch = FAISS.from_documents([Document(page_content=fallback_content)], embeddings)
+                print("✅ Created fallback FAISS index")
+        
+        if rag_chain is None and docsearch is not None:
+            print("🔄 Setting up RAG chain...")
+            retriever = docsearch.as_retriever(search_type="similarity", search_kwargs={"k":3})
+            chatModel = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
+            prompt = ChatPromptTemplate.from_messages(
+                [
+                    ("system", system_prompt),
+                    ("human", "{input}"),
+                ]
+            )
+            question_answer_chain = create_stuff_documents_chain(chatModel, prompt)
+            rag_chain = create_retrieval_chain(retriever, question_answer_chain)
+            print("✅ RAG chain ready")
             
-            Common symptoms include:
-            - Cough with phlegm or pus
-            - Fever, sweating and shaking chills
-            - Shortness of breath
-            - Rapid, shallow breathing
-            - Sharp or stabbing chest pain that gets worse when you breathe deeply or cough
-            - Loss of appetite, low energy, and fatigue
-            - Nausea and vomiting, especially in small children
-            - Confusion, especially in older people
-            
-            Risk factors include:
-            - Age (children under 2 and adults over 65)
-            - Smoking
-            - Chronic diseases (asthma, COPD, heart disease)
-            - Weakened immune system
-            - Recent surgery or hospitalization
-            
-            Treatment typically involves antibiotics for bacterial pneumonia, rest, and supportive care.
-            """
-            docsearch = FAISS.from_documents([Document(page_content=fallback_content)], embeddings)
-            print("✅ Created fallback FAISS index")
-    
-    if rag_chain is None and docsearch is not None:
-        retriever = docsearch.as_retriever(search_type="similarity", search_kwargs={"k":3})
-        chatModel = ChatGoogleGenerativeAI(model="gemini-2.0-flash")
-        prompt = ChatPromptTemplate.from_messages(
-            [
-                ("system", system_prompt),
-                ("human", "{input}"),
-            ]
-        )
-        question_answer_chain = create_stuff_documents_chain(chatModel, prompt)
-        rag_chain = create_retrieval_chain(retriever, question_answer_chain)
+    except Exception as e:
+        print(f"❌ Error during initialization: {e}")
+        import traceback
+        traceback.print_exc()
 
-# Initialize components immediately when app starts
-print("🚀 Initializing AI Medical Assistant...")
-initialize_components()
-print("✅ AI Medical Assistant ready!")
+# Initialize components lazily to avoid serverless crashes
+print("🚀 AI Medical Assistant ready for lazy initialization!")
 
 @app.route("/")
 def index():
@@ -94,6 +103,9 @@ def index():
 @app.route("/get", methods=["GET", "POST"])
 def chat():
     try:
+        # Initialize components lazily
+        initialize_components()
+        
         if rag_chain is None:
             return "Chatbot is not available at the moment. Please try again later."
         
@@ -117,6 +129,9 @@ def chat():
 def health_check():
     """Health check endpoint to verify all components are working."""
     try:
+        # Initialize components lazily
+        initialize_components()
+        
         status = {
             "chatbot": "✅ Ready" if rag_chain is not None else "❌ Not loaded",
             "faiss_index": "✅ Ready" if docsearch is not None else "❌ Not loaded",
