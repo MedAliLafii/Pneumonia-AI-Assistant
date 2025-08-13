@@ -2,6 +2,10 @@
 
 A comprehensive medical AI assistant that combines natural language processing and computer vision to provide both text-based answers about pneumonia and chest X-ray analysis for pneumonia detection.
 
+## Dataset used
+
+https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia
+
 ## Features
 
 ### 🤖 AI Chatbot
@@ -96,7 +100,6 @@ A comprehensive medical AI assistant that combines natural language processing a
 │   └── improved_pneumonia_cnn.h5  # Trained CNN model
 ├── data/                    # PDF documents for knowledge base
 ├── uploads/                 # Temporary upload directory (auto-created)
-├── templates/               # HTML templates
 ├── static/                  # CSS and static assets
 └── faiss_index/             # Vector database (generated)
 ```
@@ -111,10 +114,6 @@ A comprehensive medical AI assistant that combines natural language processing a
 ## Important Notes
 
 ⚠️ **Medical Disclaimer**: This application is for educational and research purposes only. The AI analysis should not be used as a substitute for professional medical diagnosis. Always consult with qualified healthcare professionals for medical decisions.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Author
 
