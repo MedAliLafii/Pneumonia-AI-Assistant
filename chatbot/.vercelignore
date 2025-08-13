@@ -1,6 +1,5 @@
 # Large model files
 models/
-faiss_index/
 uploads/
 
 # Development files

@@ -1,5 +1,5 @@
 from flask import Flask, render_template, jsonify, request, redirect, url_for
-from src.helper import download_hugging_face_embeddings, load_pdf_file, text_split
+from src.helper import download_hugging_face_embeddings
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains import create_retrieval_chain
@@ -33,15 +33,12 @@ def initialize_components():
         embeddings = download_hugging_face_embeddings()
     
     if docsearch is None:
-        print("Creating new FAISS index from PDF data...")
+        # Only try to load existing FAISS index, never create new one
         try:
-            data = "data"
-            documents = load_pdf_file(data)
-            text_chunks = text_split(documents)
-            docsearch = FAISS.from_documents(text_chunks, embeddings)
-            print("✅ Created new FAISS index")
+            docsearch = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
+            print("✅ Loaded existing FAISS index")
         except Exception as e:
-            print(f"❌ Failed to create index: {e}")
+            print(f"❌ No existing FAISS index found: {e}")
             # Create a minimal fallback with basic medical information
             from langchain_core.documents import Document
             fallback_content = """
