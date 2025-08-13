@@ -1,15 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "app.py",
-      "use": "@vercel/python@3.0.0",
-      "config": {
-        "maxDuration": 30,
-        "runtime": "python3.11"
-      }
+  "functions": {
+    "app.py": {
+      "runtime": "python3.11"
     }
-  ],
+  },
   "routes": [
     {
       "src": "/static/(.*)",
@@ -21,6 +16,7 @@
     }
   ],
   "env": {
-    "PYTHONPATH": "."
+    "PYTHONPATH": ".",
+    "PYTHON_VERSION": "3.11"
   }
 }
