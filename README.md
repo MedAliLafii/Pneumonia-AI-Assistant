@@ -6,6 +6,10 @@ A clean, simple deep learning application for detecting pneumonia from chest X-r
 
 This AI system achieves **85.1% accuracy** with **95.4% precision** in pneumonia detection, providing instant analysis of chest X-ray images. Built with modern technologies and designed for easy deployment.
 
+## 🧐 Dataset used
+
+https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia
+
 ## ✨ Key Features
 
 - **🔮 Simple Upload**: Just drag and drop or click to upload X-ray images
