@@ -51,6 +51,11 @@
         margin: 2rem 0;
     }
 
+    #imagePreview {
+        text-align: center;
+        margin: 2rem 0;
+    }
+
     .result-box {
         background: linear-gradient(135deg, #2d5a2d 0%, #1e3a1e 100%);
         padding: 2rem;
@@ -284,6 +289,9 @@
             alert('Please select a valid image file (PNG, JPG, JPEG).');
             return;
         }
+
+        // Hide upload area
+        uploadContainer.style.display = 'none';
 
         // Show image preview
         const reader = new FileReader();

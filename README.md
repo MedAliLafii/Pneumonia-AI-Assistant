@@ -1,139 +1,120 @@
-# AI Pneumonia Assistant
+# Pneumonia AI Assistant
 
-A comprehensive AI-powered medical assistant split into two specialized applications for optimal deployment and performance.
+A comprehensive medical AI assistant that combines natural language processing and computer vision to provide both text-based answers about pneumonia and chest X-ray analysis for pneumonia detection.
 
-## 🏗️ Project Structure
+## Dataset used
 
-This project has been split into two separate applications:
+https://www.kaggle.com/datasets/paultimothymooney/chest-xray-pneumonia
 
-### 🤖 **Chatbot App** (`chatbot/`)
-- **Purpose**: Medical consultation and information retrieval
-- **Features**: RAG-powered chatbot using Google Gemini 2.0 Flash
-- **Deployment**: Vercel (lightweight, fast)
-- **Tech Stack**: Flask, LangChain, FAISS, Google Gemini
+## Features
 
-### 🔬 **CNN App** (`cnn/`)
-- **Purpose**: X-ray analysis and pneumonia detection
-- **Features**: Deep learning CNN for chest X-ray classification
-- **Deployment**: Vercel (CPU-optimized)
-- **Tech Stack**: Flask, TensorFlow CPU, OpenCV, CNN
+### 🤖 AI Chatbot
 
-## 🚀 Quick Start
+- **Specialized Knowledge**: Trained specifically on pneumonia-related medical information
+- **AI-Powered Responses**: Uses Google's Gemini AI model for intelligent responses
+- **Document-Based Knowledge**: Built on a comprehensive PDF knowledge base
+- **Real-time Responses**: Instant answers to medical questions about pneumonia
 
-### Chatbot App
-```bash
-cd chatbot
-pip install -r requirements.txt
-python app.py
+### 🔬 X-Ray Analysis
+
+- **CNN-Based Detection**: Uses a trained convolutional neural network for pneumonia detection
+- **Image Processing**: Supports multiple image formats (PNG, JPG, JPEG, GIF, BMP, TIFF)
+- **Confidence Scoring**: Provides confidence percentages for predictions
+- **Medical Disclaimer**: Includes appropriate medical disclaimers for AI-assisted diagnosis
+
+### 🌐 Web Interface
+
+- **Unified Interface**: Single application with tabbed interface for both functionalities
+- **Modern Design**: Clean, responsive design with Bootstrap
+- **Drag & Drop**: Easy image upload with drag-and-drop functionality
+- **Real-time Feedback**: Loading indicators and clear result display
+
+## Technology Stack
+
+- **Backend**: Flask (Python)
+- **AI Models**:
+  - Google Gemini 2.0 Flash (for chatbot)
+  - Custom CNN (for X-ray analysis)
+- **Deep Learning**: TensorFlow/Keras
+- **Vector Database**: FAISS for efficient document retrieval
+- **Embeddings**: HuggingFace sentence-transformers
+- **Image Processing**: OpenCV, Pillow
+- **Frontend**: HTML, CSS, JavaScript with Bootstrap
+
+## Setup
+
+1. **Install Dependencies**:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Environment Variables**:
+   Create a `.env` file with your Google Gemini API key:
+
+   ```
+   GEMINI_API_KEY=your_api_key_here
+   ```
+
+3. **Knowledge Base Setup**:
+   Place your pneumonia-related PDF documents in the `data/` folder, then run:
+
+   ```bash
+   python store_index.py
+   ```
+
+4. **Run the Application**:
+
+   ```bash
+   python app.py
+   ```
+
+5. **Access the Application**:
+   Open your browser and go to `http://localhost:8080`
+
+## Usage
+
+### Chat Mode
+
+- Switch to the "Chat" tab
+- Ask questions about pneumonia symptoms, diagnosis, treatment, etc.
+- Get instant AI-powered responses based on medical literature
+
+### X-Ray Analysis Mode
+
+- Switch to the "X-Ray Analysis" tab
+- Upload a chest X-ray image (drag & drop or click to browse)
+- Receive AI analysis with confidence scores
+- Get appropriate medical disclaimers
+
+## Project Structure
+
+```
+├── app.py                    # Main Flask application
+├── store_index.py           # Script to build the knowledge base
+├── src/
+│   ├── helper.py            # Utility functions for PDF processing
+│   ├── prompt.py            # AI system prompts
+│   └── cnn_predictor.py     # CNN-based pneumonia detection
+├── models/
+│   └── improved_pneumonia_cnn.h5  # Trained CNN model
+├── data/                    # PDF documents for knowledge base
+├── uploads/                 # Temporary upload directory (auto-created)
+├── static/                  # CSS and static assets
+└── faiss_index/             # Vector database (generated)
 ```
 
-### CNN App
-```bash
-cd cnn
-pip install -r requirements.txt
-python app.py
-```
+## API Endpoints
 
-## 📁 Directory Structure
+- `GET /` - Main application interface
+- `POST /get` - Chatbot endpoint for text queries
+- `POST /upload_image` - X-ray analysis endpoint
+- `GET /health` - Health check endpoint
 
-```
-Pneumonia/
-├── chatbot/                 # Medical Assistant Chatbot
-│   ├── app.py              # Flask application
-│   ├── requirements.txt    # Dependencies
-│   ├── src/                # Source code
-│   ├── templates/          # HTML templates
-│   ├── static/             # CSS, JS files
-│   ├── data/               # PDF medical data
-│   ├── faiss_index/        # Vector database
-│   ├── vercel.json         # Vercel configuration
-│   └── README.md           # Chatbot documentation
-├── cnn/                    # X-Ray Analysis System
-│   ├── app.py              # Flask application
-│   ├── requirements.txt    # Dependencies
-│   ├── src/                # Source code
-│   ├── templates/          # HTML templates
-│   ├── static/             # CSS, JS files
-│   ├── models/             # CNN model files
-│   ├── vercel.json         # Vercel configuration
-│   └── README.md           # CNN documentation
-└── README.md               # This file
-```
+## Important Notes
 
-## 🔗 Cross-App Integration
+⚠️ **Medical Disclaimer**: This application is for educational and research purposes only. The AI analysis should not be used as a substitute for professional medical diagnosis. Always consult with qualified healthcare professionals for medical decisions.
 
-Both apps are designed to work together:
-- **Sidebar Navigation**: Each app has links to the other
-- **Environment Variables**: Configure URLs for cross-linking
-- **Unified Experience**: Seamless user experience across both apps
+## Author
 
-## 🛠️ Deployment
-
-### Chatbot App (Vercel)
-1. Deploy to Vercel: `vercel`
-2. Set environment variables:
-   - `GEMINI_API_KEY`
-   - `CNN_APP_URL`
-   - `CHATBOT_APP_URL`
-
-### CNN App (Vercel)
-1. Deploy to Vercel: `vercel`
-2. Set environment variables:
-   - `CNN_APP_URL`
-   - `CHATBOT_APP_URL`
-
-## 🎯 Features
-
-### Chatbot App
-- 🤖 **RAG-powered responses** using medical knowledge base
-- 📚 **PDF document processing** for medical information
-- 🔍 **Semantic search** with FAISS vector database
-- 💬 **Natural language interaction** with Google Gemini 2.0 Flash
-
-### CNN App
-- 🔬 **X-ray analysis** with deep learning CNN
-- 📊 **Real-time predictions** with confidence scores
-- 🖼️ **Image processing** and validation
-- 📱 **Responsive interface** for mobile and desktop
-
-## 🔧 Tech Stack
-
-### Backend
-- **Flask**: Web framework
-- **Python**: Core language
-- **LangChain**: RAG framework
-- **TensorFlow**: Deep learning (CNN app)
-
-### AI/ML
-- **Google Gemini 2.0 Flash**: Chat model
-- **FAISS**: Vector database
-- **CNN**: X-ray classification
-- **HuggingFace**: Embeddings
-
-### Frontend
-- **HTML/CSS/JavaScript**: Custom styling
-- **Bootstrap**: Responsive design
-- **Jinja2**: Template engine
-
-### Deployment
-- **Vercel**: Serverless deployment
-- **Environment Variables**: Configuration management
-
-## 📋 Environment Variables
-
-### Chatbot App
-- `GEMINI_API_KEY`: Google Gemini API key
-- `CNN_APP_URL`: URL of CNN app
-- `CHATBOT_APP_URL`: URL of chatbot app
-
-### CNN App
-- `CNN_APP_URL`: URL of CNN app
-- `CHATBOT_APP_URL`: URL of chatbot app
-
-## 🚨 Disclaimer
-
-This is an AI demonstration tool for educational purposes only. Not intended for medical diagnosis. Always consult qualified healthcare professionals for medical advice.
-
-## 📄 License
-
-This project is for educational and demonstration purposes.
+Mohamed Ali Lafi - mohamedali.lafi@gmail.com
