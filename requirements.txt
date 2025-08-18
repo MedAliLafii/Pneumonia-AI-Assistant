@@ -21,6 +21,7 @@ python-dotenv
 
 # Deep Learning (CPU only for deployment)
 tensorflow-cpu
+tf-keras
 h5py
 
 # Image Processing
