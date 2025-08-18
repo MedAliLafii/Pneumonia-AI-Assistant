@@ -1,36 +1,36 @@
 # Core Framework
 streamlit==1.28.1
 
-# LangChain and AI/ML - Compatible versions
-langchain==0.1.16
-langchain-community==0.0.34
-langchain-core==0.1.45
-langchain-google-genai==1.0.7
-langchain-huggingface==0.0.2
-langchain-text-splitters==0.0.1
+# LangChain and AI/ML - Fixed version conflicts
+langchain==0.3.26
+langchain-community==0.3.26
+langchain-core==0.3.68
+langchain-google-genai==2.1.9
+langchain-huggingface==0.3.1
+langchain-text-splitters==0.3.8
 
 # Embeddings and Vector Store
-sentence-transformers==2.2.2
+sentence-transformers==4.1.0
 faiss-cpu==1.7.4
 
 # Document Processing
-pypdf==3.17.4
+pypdf==5.6.1
 
 # Environment and Configuration
-python-dotenv==1.0.1
+python-dotenv==1.1.0
 
 # Deep Learning and Computer Vision
-tensorflow==2.13.0
+tensorflow==2.20.0
 opencv-python==4.8.1.78
-h5py==3.9.0
+h5py==3.10.0
 
-# Image Processing
+# Image Processing - Compatible version
 pillow==10.0.1
 
 # Data Science and Visualization
 numpy==1.24.3
 pandas==2.0.3
-plotly==5.15.0
+plotly==5.17.0
 
 # Additional dependencies
 matplotlib==3.7.2
