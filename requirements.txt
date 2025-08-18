@@ -41,4 +41,5 @@ tensorflow-cpu==2.19.0
 protobuf==4.25.3
 tensorboard==2.19.0
 absl-py==2.1.0
-grpcio==1.64.1tf-keras==2.19.0
+grpcio==1.64.1
+tf-keras==2.19.0
