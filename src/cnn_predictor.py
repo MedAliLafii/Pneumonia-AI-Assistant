@@ -4,7 +4,7 @@ from PIL import Image
 # import cv2  # Removed OpenCV import
 import os
 import h5py
-from tensorflow.keras.optimizers import Adam
+from tensorflow import keras
 
 class MediscopePredictor:
     def __init__(self, model_path="models/pneumonia_model.h5"):
@@ -35,7 +35,7 @@ class MediscopePredictor:
             
             # Recompile with the correct settings to match training
             self.model.compile(
-                optimizer=Adam(learning_rate=0.001),
+                optimizer=keras.optimizers.Adam(learning_rate=0.001),
                 loss='binary_crossentropy',
                 metrics=['accuracy', tf.keras.metrics.AUC(name='auc')]
             )
