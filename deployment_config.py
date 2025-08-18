@@ -23,6 +23,10 @@ def configure_deployment_environment():
     # Disable TensorFlow deprecation warnings
     os.environ["TF_ENABLE_DEPRECATION_WARNINGS"] = "0"
     
+    # Additional TensorFlow stability settings
+    os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
+    os.environ["TF_GPU_ALLOCATOR"] = "cpu"
+    
     print("✅ Deployment environment configured")
 
 if __name__ == "__main__":

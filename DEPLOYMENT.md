@@ -31,13 +31,23 @@ The application requires Python 3.12.0. A `runtime.txt` file is included for pla
 
 ### 4. Testing
 
-Before deployment, run the test script to ensure compatibility:
+Before deployment, run the deployment setup script to ensure compatibility:
 
 ```bash
-python test_model_loading.py
+python deploy_setup.py
 ```
 
-This will verify that both the model and embeddings can be loaded successfully.
+This will:
+
+- Test the original model compatibility
+- Create a fallback model if needed
+- Verify all components work correctly
+
+For local testing, you can also run:
+
+```bash
+python test_local.py
+```
 
 ## Deployment Platforms
 
