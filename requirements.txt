@@ -29,4 +29,4 @@ h5py==3.10.0
 pillow==10.1.0
 
 # Data Science (minimal for inference)
-numpy==1.24.3
+numpy==1.26.4
