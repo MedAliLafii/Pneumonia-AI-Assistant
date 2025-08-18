@@ -22,10 +22,10 @@ python-dotenv==1.1.0
 # Deep Learning and Computer Vision (for inference only)
 tensorflow==2.20.0
 opencv-python==4.8.1.78
-h5py==3.10.0
+h5py==3.11.0
 
 # Image Processing
-pillow==9.4.0
+pillow==9.3.0
 
 # Data Science (minimal for inference)
 numpy==1.25.2
