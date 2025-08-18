@@ -4,10 +4,10 @@ streamlit==1.28.1
 # LangChain and AI/ML - Fixed version conflicts
 langchain==0.3.26
 langchain-community==0.3.26
-langchain-core==0.3.68
+langchain-core==0.3.70
 langchain-google-genai==2.1.9
 langchain-huggingface==0.3.1
-langchain-text-splitters==0.3.8
+langchain-text-splitters==0.3.9
 
 # Embeddings and Vector Store
 sentence-transformers==4.1.0
@@ -25,10 +25,10 @@ opencv-python==4.8.1.78
 h5py==3.10.0
 
 # Image Processing - Compatible version
-pillow==10.0.1
+pillow==9.5.0
 
 # Data Science and Visualization
-numpy==1.24.3
+numpy==1.25.2
 pandas==2.0.3
 plotly==5.17.0
 
