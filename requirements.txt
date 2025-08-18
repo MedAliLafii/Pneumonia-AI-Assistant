@@ -27,9 +27,9 @@ pypdf==5.6.1
 python-dotenv==1.1.0
 
 # Deep Learning (CPU only for deployment)
-tensorflow==2.19.0
-tf-keras==2.19.0
-h5py==3.14.0
+tensorflow==2.15.0
+tf-keras==2.15.0
+h5py==3.11.0
 
 # Image Processing
 pillow==11.1.0

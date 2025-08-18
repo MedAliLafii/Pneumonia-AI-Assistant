@@ -31,22 +31,112 @@ class MediscopePredictor:
                 self.model = None
                 return
             
-            # Load the model directly
-            self.model = tf.keras.models.load_model(self.model_path, compile=False)
+            # Try different loading strategies for compatibility
+            self.model = self._load_model_with_fallback()
             
-            # Recompile with the correct settings to match training
-            self.model.compile(
-                optimizer=keras.optimizers.Adam(learning_rate=0.001),
-                loss='binary_crossentropy',
-                metrics=['accuracy', tf.keras.metrics.AUC(name='auc')]
-            )
-            print("✅ Pneumonia detection model loaded successfully")
+            if self.model is not None:
+                # Recompile with the correct settings to match training
+                self.model.compile(
+                    optimizer=keras.optimizers.Adam(learning_rate=0.001),
+                    loss='binary_crossentropy',
+                    metrics=['accuracy', tf.keras.metrics.AUC(name='auc')]
+                )
+                print("✅ Pneumonia detection model loaded successfully")
+            else:
+                print("❌ Failed to load model with all fallback strategies")
             
         except Exception as e:
             print(f"❌ Error loading pneumonia detection model: {e}")
             print("Please ensure the model file is compatible and not corrupted.")
             print("For deployment issues, check if the model file is properly included.")
             self.model = None
+    
+    def _load_model_with_fallback(self):
+        """Load model with multiple fallback strategies for compatibility"""
+        strategies = [
+            self._load_model_strategy_1,  # Standard load
+            self._load_model_strategy_2,  # With custom objects
+            self._load_model_strategy_3,  # With custom objects and compile=False
+        ]
+        
+        for i, strategy in enumerate(strategies, 1):
+            try:
+                print(f"🔄 Trying loading strategy {i}...")
+                model = strategy()
+                if model is not None:
+                    print(f"✅ Strategy {i} successful")
+                    return model
+            except Exception as e:
+                print(f"❌ Strategy {i} failed: {str(e)[:100]}...")
+                continue
+        
+        return None
+    
+    def _load_model_strategy_1(self):
+        """Standard model loading"""
+        return tf.keras.models.load_model(self.model_path, compile=False)
+    
+    def _load_model_strategy_2(self):
+        """Load with custom objects to handle version compatibility"""
+        # Define custom objects to handle version differences
+        custom_objects = {
+            'InputLayer': tf.keras.layers.InputLayer,
+        }
+        
+        # Try to load with custom objects
+        return tf.keras.models.load_model(
+            self.model_path, 
+            compile=False, 
+            custom_objects=custom_objects
+        )
+    
+    def _load_model_strategy_3(self):
+        """Load with more comprehensive custom objects"""
+        # More comprehensive custom objects for older TensorFlow versions
+        custom_objects = {
+            'InputLayer': tf.keras.layers.InputLayer,
+            'Adam': tf.keras.optimizers.Adam,
+            'binary_crossentropy': tf.keras.losses.binary_crossentropy,
+            'accuracy': tf.keras.metrics.binary_accuracy,
+        }
+        
+        # Try to load with custom objects and handle batch_shape issue
+        try:
+            return tf.keras.models.load_model(
+                self.model_path, 
+                compile=False, 
+                custom_objects=custom_objects
+            )
+        except Exception as e:
+            if 'batch_shape' in str(e):
+                # Handle the batch_shape compatibility issue
+                print("🔄 Handling batch_shape compatibility issue...")
+                return self._load_model_with_batch_shape_fix()
+            raise e
+    
+    def _load_model_with_batch_shape_fix(self):
+        """Fix batch_shape compatibility issue by loading with custom InputLayer"""
+        import h5py
+        
+        # Create a custom InputLayer that ignores batch_shape
+        class CompatibleInputLayer(tf.keras.layers.InputLayer):
+            def __init__(self, input_shape=None, **kwargs):
+                # Remove batch_shape from kwargs if present
+                kwargs.pop('batch_shape', None)
+                super().__init__(input_shape=input_shape, **kwargs)
+        
+        custom_objects = {
+            'InputLayer': CompatibleInputLayer,
+            'Adam': tf.keras.optimizers.Adam,
+            'binary_crossentropy': tf.keras.losses.binary_crossentropy,
+            'accuracy': tf.keras.metrics.binary_accuracy,
+        }
+        
+        return tf.keras.models.load_model(
+            self.model_path, 
+            compile=False, 
+            custom_objects=custom_objects
+        )
     
 
     
