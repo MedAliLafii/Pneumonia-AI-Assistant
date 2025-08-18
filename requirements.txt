@@ -10,7 +10,8 @@ langchain-huggingface
 langchain-text-splitters
 
 # Embeddings and Vector Store
-sentence-transformers
+sentence-transformers==2.2.2
+transformers==4.35.0
 faiss-cpu
 
 # Document Processing
