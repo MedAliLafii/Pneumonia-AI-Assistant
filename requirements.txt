@@ -1,10 +1,10 @@
 # Core Framework
 streamlit==1.28.1
 
-# LangChain and AI/ML
+# LangChain and AI/ML - Fixed version conflicts
 langchain==0.3.26
 langchain-community==0.3.26
-langchain-core==0.3.26
+langchain-core==0.3.66
 langchain-google-genai==2.1.9
 langchain-huggingface==0.3.1
 langchain-text-splitters==0.3.8
@@ -24,8 +24,8 @@ tensorflow==2.20.0
 opencv-python==4.8.1.78
 h5py==3.10.0
 
-# Image Processing
-pillow==10.2.0
+# Image Processing - Compatible version
+pillow==10.1.0
 
 # Data Science and Visualization
 numpy==1.24.3
