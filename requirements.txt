@@ -17,8 +17,8 @@ pypdf==5.6.1
 # Environment and Configuration
 python-dotenv==1.1.0
 
-# Deep Learning and Computer Vision (working versions)
-tensorflow==2.13.0
+# Deep Learning and Computer Vision (Python 3.12 compatible)
+tensorflow==2.16.1
 opencv-python==4.8.1.78
 h5py==3.10.0
 
