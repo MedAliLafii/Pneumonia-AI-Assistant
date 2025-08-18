@@ -30,15 +30,8 @@ class MediscopePredictor:
                 self.model = None
                 return
             
-            # Try to load with custom objects to handle compatibility issues
-            custom_objects = {}
-            
-            # Load the model with custom objects
-            self.model = tf.keras.models.load_model(
-                self.model_path, 
-                custom_objects=custom_objects,
-                compile=False
-            )
+            # Load the model directly
+            self.model = tf.keras.models.load_model(self.model_path, compile=False)
             
             # Recompile with the correct settings to match training
             self.model.compile(
@@ -50,30 +43,7 @@ class MediscopePredictor:
             
         except Exception as e:
             print(f"❌ Error loading pneumonia detection model: {e}")
-            
-            # Try alternative model path
-            alternative_path = "models/pneumonia_model_converted.h5"
-            if os.path.exists(alternative_path) and alternative_path != self.model_path:
-                print(f"🔄 Trying alternative model path: {alternative_path}")
-                try:
-                    self.model_path = alternative_path
-                    self.model = tf.keras.models.load_model(
-                        self.model_path,
-                        custom_objects=custom_objects,
-                        compile=False
-                    )
-                    self.model.compile(
-                        optimizer=keras.optimizers.Adam(learning_rate=0.001),
-                        loss='binary_crossentropy',
-                        metrics=['accuracy', tf.keras.metrics.AUC(name='auc')]
-                    )
-                    print("✅ Pneumonia detection model loaded successfully from alternative path")
-                    return
-                except Exception as e2:
-                    print(f"❌ Alternative model also failed: {e2}")
-            
             print("Please ensure the model file is compatible and not corrupted.")
-            print("💡 Try running the convert_model.py script to fix compatibility issues.")
             self.model = None
     
 
