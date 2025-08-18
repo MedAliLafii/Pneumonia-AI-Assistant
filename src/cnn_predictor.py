@@ -18,7 +18,33 @@ class MediscopePredictor:
         self.model = None
         self.class_names = ['Pneumonia', 'Normal']  # Class 0: Pneumonia, Class 1: Normal
         self.img_size = 150  # Model expects 150x150 images
+        
+        # Force CPU usage for deployment compatibility
+        self._configure_tensorflow()
         self.load_model()
+        
+    def _configure_tensorflow(self):
+        """Configure TensorFlow for deployment compatibility."""
+        try:
+            # Force CPU usage to avoid CUDA issues
+            os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+            
+            # Configure TensorFlow to use CPU only
+            tf.config.set_visible_devices([], 'GPU')
+            
+            # Set memory growth to avoid memory issues
+            gpus = tf.config.experimental.list_physical_devices('GPU')
+            if gpus:
+                try:
+                    for gpu in gpus:
+                        tf.config.experimental.set_memory_growth(gpu, True)
+                except RuntimeError as e:
+                    print(f"GPU memory growth setting failed: {e}")
+                    
+            print("✅ TensorFlow configured for CPU-only deployment")
+            
+        except Exception as e:
+            print(f"⚠️ TensorFlow configuration warning: {e}")
         
     def load_model(self):
         """Load the trained pneumonia detection CNN model."""
@@ -30,8 +56,15 @@ class MediscopePredictor:
                 self.model = None
                 return
             
-            # Load the model directly
-            self.model = tf.keras.models.load_model(self.model_path, compile=False)
+            # Load the model with CPU-only configuration
+            print("🔄 Loading pneumonia detection model...")
+            
+            # Use custom_objects to handle any custom layers
+            self.model = tf.keras.models.load_model(
+                self.model_path, 
+                compile=False,
+                options=tf.saved_model.LoadOptions(experimental_io_device='/cpu:0')
+            )
             
             # Recompile with the correct settings to match training
             self.model.compile(
@@ -39,7 +72,15 @@ class MediscopePredictor:
                 loss='binary_crossentropy',
                 metrics=['accuracy', tf.keras.metrics.AUC(name='auc')]
             )
-            print("✅ Pneumonia detection model loaded successfully")
+            
+            # Test the model with a dummy input
+            dummy_input = np.random.random((1, self.img_size, self.img_size, 1))
+            test_prediction = self.model.predict(dummy_input, verbose=0)
+            
+            if test_prediction is not None and test_prediction.shape[1] == 1:
+                print("✅ Pneumonia detection model loaded and tested successfully")
+            else:
+                raise Exception("Model test prediction failed")
             
         except Exception as e:
             print(f"❌ Error loading pneumonia detection model: {e}")

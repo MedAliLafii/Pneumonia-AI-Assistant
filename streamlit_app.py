@@ -15,6 +15,12 @@ import uuid
 from PIL import Image
 import io
 
+# Import deployment configuration
+from deployment_config import configure_deployment_environment
+
+# Configure deployment environment
+configure_deployment_environment()
+
 # Load environment variables
 load_dotenv()
 

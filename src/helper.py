@@ -5,6 +5,8 @@ from typing import List
 from langchain_core.documents import Document
 import streamlit as st
 import numpy as np
+import os
+import time
 
 
 #Extract Data From the PDF File
@@ -72,20 +74,54 @@ class SimpleFallbackEmbeddings:
 #Download the Embeddings from HuggingFace 
 def download_hugging_face_embeddings():
     """
-    Download HuggingFace embeddings with error handling and fallback options.
+    Download HuggingFace embeddings with enhanced error handling and fallback options.
     """
-    try:
-        embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')  #this model return 384 dimensions
-        st.success("✅ HuggingFace embeddings loaded successfully")
-        return embeddings
-        
-    except ImportError as e:
-        st.error(f"❌ ImportError: {str(e)}")
-        st.error("Missing required dependencies. Please ensure torch, tokenizers, safetensors, and huggingface-hub are installed.")
-        st.warning("⚠️ Using fallback embeddings (limited functionality)")
-        return SimpleFallbackEmbeddings()
-        
-    except Exception as e:
-        st.warning(f"⚠️ Error loading embeddings: {str(e)}")
-        st.warning("⚠️ Using fallback embeddings (limited functionality)")
-        return SimpleFallbackEmbeddings()
+    # Set environment variables to reduce rate limiting issues
+    os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+    os.environ["TOKENIZERS_PARALLELISM"] = "false"
+    
+    # Try multiple models in order of preference
+    models_to_try = [
+        'sentence-transformers/all-MiniLM-L6-v2',  # 384 dimensions, smaller
+        'sentence-transformers/paraphrase-MiniLM-L3-v2',  # 384 dimensions, even smaller
+        'sentence-transformers/all-mpnet-base-v2'  # 768 dimensions, fallback
+    ]
+    
+    for model_name in models_to_try:
+        try:
+            st.info(f"🔄 Attempting to load embeddings model: {model_name}")
+            
+            # Add retry logic with exponential backoff
+            max_retries = 3
+            for attempt in range(max_retries):
+                try:
+                    embeddings = HuggingFaceEmbeddings(
+                        model_name=model_name,
+                        model_kwargs={'device': 'cpu'},  # Force CPU usage
+                        encode_kwargs={'normalize_embeddings': True}
+                    )
+                    
+                    # Test the embeddings with a simple query
+                    test_embedding = embeddings.embed_query("test")
+                    if len(test_embedding) > 0:
+                        st.success(f"✅ HuggingFace embeddings loaded successfully: {model_name}")
+                        return embeddings
+                    else:
+                        raise Exception("Embeddings test failed")
+                        
+                except Exception as e:
+                    if attempt < max_retries - 1:
+                        wait_time = 2 ** attempt  # Exponential backoff: 1s, 2s, 4s
+                        st.warning(f"⚠️ Attempt {attempt + 1} failed for {model_name}. Retrying in {wait_time}s...")
+                        time.sleep(wait_time)
+                    else:
+                        st.warning(f"⚠️ Failed to load {model_name} after {max_retries} attempts: {str(e)}")
+                        break
+                        
+        except Exception as e:
+            st.warning(f"⚠️ Error with model {model_name}: {str(e)}")
+            continue
+    
+    # If all models fail, use fallback
+    st.warning("⚠️ All HuggingFace models failed. Using fallback embeddings (limited functionality)")
+    return SimpleFallbackEmbeddings()
