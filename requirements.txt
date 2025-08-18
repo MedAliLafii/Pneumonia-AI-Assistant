@@ -37,5 +37,5 @@ requests==2.32.3
 urllib3==2.3.0
 
 # Optional: Remove TensorFlow if not needed
-# tensorflow==2.19.0
-# tf-keras==2.19.0
+tensorflow-cpu==2.19.0
+tf-keras==2.19.0
