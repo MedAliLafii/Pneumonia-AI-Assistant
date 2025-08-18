@@ -29,10 +29,16 @@ python-dotenv==1.0.0
 # Deep Learning (CPU only for deployment)
 tensorflow-cpu
 tf-keras==2.15.0
-h5py==3.10.0
+h5py>=3.11.0
 
 # Image Processing
 pillow==10.1.0
 
 # Data Science (minimal for inference)
 numpy==1.26.4
+pandas==2.3.1
+scikit-learn==1.7.1
+
+# Additional dependencies for stability
+requests==2.32.4
+urllib3==2.5.0
