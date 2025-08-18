@@ -37,7 +37,8 @@ pillow
 # Data Science (minimal for inference)
 numpy
 pandas==2.3.1
-scikit-learn==1.7.1
+scipy
+scikit-learn
 
 # Additional dependencies for stability
 requests==2.32.4
