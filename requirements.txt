@@ -1,42 +1,45 @@
 # Core Framework
-streamlit==1.42.2
+streamlit==1.48.1
 
 # LangChain and AI/ML (compatible versions)
-langchain==0.3.26
-langchain-community==0.3.26
-langchain-core==0.3.74
-langchain-google-genai==2.1.9
-langchain-huggingface==0.3.1
-langchain-text-splitters==0.3.9
+langchain
+langchain-community
+langchain-core
+langchain-google-genai
+langchain-huggingface
+langchain-text-splitters
 
 # Embeddings and Vector Store
-sentence-transformers==4.1.0
-transformers==4.46.3
-faiss-cpu==1.9.0.post1
+sentence-transformers
+transformers
+faiss-cpu
 
 # HuggingFace Dependencies (required for langchain-huggingface)
-torch==2.8.0
-tokenizers==0.20.3
-safetensors==0.4.5
-huggingface-hub==0.34.4
+torch
+tokenizers
+safetensors
+huggingface-hub
 
 # Document Processing
-pypdf==5.6.1
+pypdf==3.17.4
 
 # Environment and Configuration
-python-dotenv==1.1.0
+python-dotenv==1.0.0
 
 # Deep Learning (CPU only for deployment)
-tensorflow==2.19.0
-tf-keras==2.19.0
-h5py==3.14.0
+tensorflow-cpu
+tf-keras==2.15.0
+h5py>=3.11.0
 
 # Image Processing
-pillow==11.1.0
+pillow
 
 # Data Science (minimal for inference)
-numpy==2.1.3
+numpy
+pandas==2.3.1
+scipy
+scikit-learn
 
 # Additional dependencies for stability
-requests==2.32.3
-urllib3==2.3.0
+requests==2.32.4
+urllib3==2.5.0
