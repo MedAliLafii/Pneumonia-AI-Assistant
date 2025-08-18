@@ -29,6 +29,16 @@ Ensure the following files are included in your deployment:
 
 The application requires Python 3.12.0. A `runtime.txt` file is included for platforms that support it.
 
+### 4. Testing
+
+Before deployment, run the test script to ensure compatibility:
+
+```bash
+python test_model_loading.py
+```
+
+This will verify that both the model and embeddings can be loaded successfully.
+
 ## Deployment Platforms
 
 ### Streamlit Cloud
@@ -73,12 +83,20 @@ The application requires Python 3.12.0. A `runtime.txt` file is included for pla
 
 ### 3. Model Loading Failures
 
-**Problem**: CNN model not loading properly
+**Problem**: CNN model not loading properly due to TensorFlow version incompatibility
 **Solution**: Enhanced error handling with:
 
+- Multiple loading strategies with different custom objects
 - Model file existence checks
 - Test predictions after loading
 - Graceful fallbacks
+- Fallback model creation script available
+
+**If the original model fails to load:**
+
+1. Run `python create_fallback_model.py` to create a compatible model
+2. Replace `models/pneumonia_model.h5` with the fallback model
+3. Deploy again
 
 ### 4. Memory Issues
 
