@@ -24,38 +24,38 @@ class MediscopePredictor:
         """Load the trained pneumonia detection CNN model."""
         try:
             # Check if model file exists
-            print(f"🔍 Checking for model file: {self.model_path}")
+            st.info(f"🔍 Checking for model file: {self.model_path}")
             if not os.path.exists(self.model_path):
-                print(f"❌ Model file not found: {self.model_path}")
-                print("Please ensure the trained model file is available in the models folder.")
-                print("For deployment, ensure the model file is included in your deployment package.")
+                st.error(f"❌ Model file not found: {self.model_path}")
+                st.error("Please ensure the trained model file is available in the models folder.")
+                st.error("For deployment, ensure the model file is included in your deployment package.")
                 self.model = None
                 return
             
-            print(f"✅ Model file found: {self.model_path}")
-            print(f"📁 File size: {os.path.getsize(self.model_path)} bytes")
+            st.success(f"✅ Model file found: {self.model_path}")
+            st.info(f"📁 File size: {os.path.getsize(self.model_path)} bytes")
             
             # Simple direct loading for TensorFlow 2.19
-            print("🔄 Loading model with TensorFlow 2.19...")
+            st.info("🔄 Loading model with TensorFlow 2.19...")
             self.model = tf.keras.models.load_model(self.model_path, compile=False)
-            print("✅ Model loaded successfully")
+            st.success("✅ Model loaded successfully")
             
             # Recompile with the correct settings to match training
-            print("🔄 Compiling model...")
+            st.info("🔄 Compiling model...")
             self.model.compile(
                 optimizer=keras.optimizers.Adam(learning_rate=0.001),
                 loss='binary_crossentropy',
                 metrics=['accuracy', tf.keras.metrics.AUC(name='auc')]
             )
-            print("✅ Pneumonia detection model loaded and compiled successfully")
+            st.success("✅ Pneumonia detection model loaded and compiled successfully")
             
         except Exception as e:
-            print(f"❌ Error loading pneumonia detection model: {e}")
-            print(f"❌ Error type: {type(e).__name__}")
+            st.error(f"❌ Error loading pneumonia detection model: {e}")
+            st.error(f"❌ Error type: {type(e).__name__}")
             import traceback
-            print(f"❌ Full traceback: {traceback.format_exc()}")
-            print("Please ensure the model file is compatible and not corrupted.")
-            print("For deployment issues, check if the model file is properly included.")
+            st.error(f"❌ Full traceback: {traceback.format_exc()}")
+            st.error("Please ensure the model file is compatible and not corrupted.")
+            st.error("For deployment issues, check if the model file is properly included.")
             self.model = None
     
 
@@ -111,22 +111,22 @@ class MediscopePredictor:
         Returns:
             dict: Prediction results with confidence scores
         """
-        print(f"🔍 Starting prediction for: {image_path}")
+        st.info(f"🔍 Starting prediction for: {image_path}")
         
         # Try to load model if not already loaded
         if self.model is None:
-            print("🔄 Model is None, attempting to load...")
+            st.warning("🔄 Model is None, attempting to load...")
             self.load_model()
         
         if self.model is None:
-            print("❌ Model failed to load")
+            st.error("❌ Model failed to load")
             return {
                 "error": "Model not available. This feature requires the model file (pneumonia_model.h5) which may not be included in the deployment. Please ensure the model file is present in the models/ directory.",
                 "prediction": None,
                 "confidence": 0.0
             }
         
-        print("✅ Model is loaded and ready")
+        st.success("✅ Model is loaded and ready")
         
         # Preprocess image
         processed_img = self.preprocess_image(image_path)
