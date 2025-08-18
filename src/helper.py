@@ -67,6 +67,13 @@ class SimpleFallbackEmbeddings:
         np.random.seed(hash(text) % 2**32)
         embedding = np.random.normal(0, 1, self.dimension)
         return embedding.tolist()
+    
+    def __call__(self, texts):
+        """Make the object callable for compatibility."""
+        if isinstance(texts, str):
+            return self.embed_query(texts)
+        else:
+            return self.embed_documents(texts)
 
 
 #Download the Embeddings from HuggingFace 
