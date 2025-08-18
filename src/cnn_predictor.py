@@ -27,6 +27,7 @@ class MediscopePredictor:
             if not os.path.exists(self.model_path):
                 print(f"❌ Model file not found: {self.model_path}")
                 print("Please ensure the trained model file is available in the models folder.")
+                print("For deployment, ensure the model file is included in your deployment package.")
                 self.model = None
                 return
             
@@ -44,6 +45,7 @@ class MediscopePredictor:
         except Exception as e:
             print(f"❌ Error loading pneumonia detection model: {e}")
             print("Please ensure the model file is compatible and not corrupted.")
+            print("For deployment issues, check if the model file is properly included.")
             self.model = None
     
 
@@ -103,7 +105,7 @@ class MediscopePredictor:
         
         if self.model is None:
             return {
-                "error": "Model not available. This feature requires the model file which is not included in the deployment.",
+                "error": "Model not available. This feature requires the model file (pneumonia_model.h5) which may not be included in the deployment. Please ensure the model file is present in the models/ directory.",
                 "prediction": None,
                 "confidence": 0.0
             }
