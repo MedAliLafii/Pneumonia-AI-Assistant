@@ -3,6 +3,8 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from typing import List
 from langchain_core.documents import Document
+import streamlit as st
+import numpy as np
 
 
 #Extract Data From the PDF File
@@ -42,8 +44,48 @@ def text_split(extracted_data):
     return text_chunks
 
 
+class SimpleFallbackEmbeddings:
+    """
+    A simple fallback embeddings class that generates random embeddings.
+    This is used when HuggingFace embeddings fail to load.
+    """
+    def __init__(self, dimension=384):
+        self.dimension = dimension
+    
+    def embed_documents(self, texts):
+        """Generate random embeddings for documents."""
+        embeddings = []
+        for text in texts:
+            # Generate a deterministic embedding based on text length and content
+            np.random.seed(hash(text) % 2**32)
+            embedding = np.random.normal(0, 1, self.dimension)
+            embeddings.append(embedding.tolist())
+        return embeddings
+    
+    def embed_query(self, text):
+        """Generate random embedding for a query."""
+        np.random.seed(hash(text) % 2**32)
+        embedding = np.random.normal(0, 1, self.dimension)
+        return embedding.tolist()
+
 
 #Download the Embeddings from HuggingFace 
 def download_hugging_face_embeddings():
-    embeddings=HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')  #this model return 384 dimensions
-    return embeddings
+    """
+    Download HuggingFace embeddings with error handling and fallback options.
+    """
+    try:
+        embeddings = HuggingFaceEmbeddings(model_name='sentence-transformers/all-MiniLM-L6-v2')  #this model return 384 dimensions
+        st.success("✅ HuggingFace embeddings loaded successfully")
+        return embeddings
+        
+    except ImportError as e:
+        st.error(f"❌ ImportError: {str(e)}")
+        st.error("Missing required dependencies. Please ensure torch, tokenizers, safetensors, and huggingface-hub are installed.")
+        st.warning("⚠️ Using fallback embeddings (limited functionality)")
+        return SimpleFallbackEmbeddings()
+        
+    except Exception as e:
+        st.warning(f"⚠️ Error loading embeddings: {str(e)}")
+        st.warning("⚠️ Using fallback embeddings (limited functionality)")
+        return SimpleFallbackEmbeddings()
