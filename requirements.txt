@@ -1,11 +1,13 @@
 # Core Framework
 streamlit==1.28.1
 
-# LangChain and AI/ML (working versions)
+# LangChain and AI/ML
 langchain==0.3.26
 langchain-community==0.3.26
+langchain-core==0.3.26
 langchain-google-genai==2.1.9
 langchain-huggingface==0.3.1
+langchain-text-splitters==0.3.1
 
 # Embeddings and Vector Store
 sentence-transformers==4.1.0
@@ -17,14 +19,13 @@ pypdf==5.6.1
 # Environment and Configuration
 python-dotenv==1.1.0
 
-# Deep Learning and Computer Vision (Python 3.12 compatible)
-tensorflow==2.16.1
+# Deep Learning and Computer Vision
+tensorflow==2.13.0
 opencv-python==4.8.1.78
 h5py==3.10.0
 
-# Image Processing (working version)
+# Image Processing
 pillow==10.1.0
 
-# Data Science (working versions)
+# Data Science (minimal for inference)
 numpy==1.24.3
-pandas==2.0.3
