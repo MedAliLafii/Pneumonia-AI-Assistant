@@ -1,5 +1,5 @@
 # Core Framework
-streamlit==1.28.1
+streamlit==1.32.0
 
 # LangChain and AI/ML (fully compatible versions)
 langchain==0.3.26
@@ -29,3 +29,6 @@ pillow==10.2.0
 
 # Data Science (minimal for inference)
 numpy==1.26.4
+
+# Explicitly specify protobuf to avoid conflicts
+protobuf>=5.28.0
