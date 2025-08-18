@@ -1,0 +1,669 @@
+{% extends "base.html" %}
+
+{% block title %}Pneumonia Detection - Mediscope AI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .upload-container {
+        border: 2px dashed #667eea;
+        border-radius: 15px;
+        background: var(--secondary-gradient);
+        padding: 3rem;
+        text-align: center;
+        color: white;
+        transition: all 0.3s ease;
+        margin: 2rem 0;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .upload-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+        transition: left 0.5s;
+    }
+
+    .upload-container:hover::before {
+        left: 100%;
+    }
+
+    .upload-container:hover {
+        border-color: #764ba2;
+        background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+        transform: translateY(-2px);
+    }
+
+    .upload-container.dragover {
+        border-color: #764ba2;
+        background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+        transform: translateY(-2px);
+    }
+
+    .upload-icon {
+        font-size: 4rem;
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+
+    .upload-text h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .upload-text p {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin-bottom: 0.5rem;
+    }
+
+    .file-input {
+        display: none;
+    }
+
+    .image-preview {
+        max-width: 100%;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        margin: 2rem 0;
+    }
+
+    #imagePreview {
+        text-align: center;
+        margin: 2rem 0;
+    }
+
+    .result-box {
+        background: var(--success-gradient);
+        padding: 2rem;
+        border-radius: 15px;
+        border-left: 5px solid #28a745;
+        margin: 2rem 0;
+        text-align: center;
+        color: white;
+        animation: slideIn 0.5s ease;
+    }
+
+    .result-box.pneumonia {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        border-left-color: #dc3545;
+    }
+
+    .result-box.normal {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border-left-color: #28a745;
+    }
+
+    .result-box.unknown {
+        background: linear-gradient(135deg, #4a4a4a 0%, #2d2d2d 100%);
+        border-left-color: #6c757d;
+    }
+
+    .class-scores {
+        background: #2c3e50;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        color: white;
+    }
+
+    .class-scores h4 {
+        margin-bottom: 1rem;
+        color: #ecf0f1;
+    }
+
+    .class-scores ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .class-scores li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #34495e;
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .class-scores li:last-child {
+        border-bottom: none;
+    }
+
+    .result-box h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .result-box p {
+        font-size: 1.2rem;
+        margin: 1rem 0;
+    }
+
+    .confidence-bar {
+        background: #2c3e50;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        color: white;
+    }
+
+    .confidence-fill {
+        background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+        height: 25px;
+        border-radius: 12px;
+        transition: width 0.8s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .confidence-fill.high {
+        background: linear-gradient(90deg, #dc3545 0%, #fd7e14 100%);
+    }
+
+    .confidence-fill::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { left: -100%; }
+        100% { left: 100%; }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .loading-analysis {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+
+    .analysis-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #667eea;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 0 auto 1rem;
+    }
+
+    .risk-level {
+        background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+        border: 1px solid #ffc107;
+        border-radius: 10px;
+        padding: 1rem;
+        margin: 1rem 0;
+        color: #856404;
+        text-align: center;
+    }
+
+    .risk-level.high {
+        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+        border-color: #dc3545;
+        color: #721c24;
+    }
+
+    .disclaimer {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border: 1px solid #2196f3;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin: 2rem 0;
+        text-align: center;
+        color: #1565c0;
+    }
+
+    .disclaimer h4 {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .disclaimer p {
+        margin-bottom: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .error-message {
+        background: var(--danger-gradient);
+        color: white;
+        padding: 1rem;
+        border-radius: 10px;
+        margin: 1rem 0;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
+
+    .error-message i {
+        font-size: 1.2rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .upload-container {
+            padding: 2rem 1rem;
+            margin: 1rem 0;
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+        }
+        
+        .upload-text h3 {
+            font-size: 1.3rem;
+        }
+        
+        .upload-text p {
+            font-size: 0.9rem;
+        }
+        
+        .result-box {
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .result-box h2 {
+            font-size: 1.5rem;
+        }
+        
+        .result-box p {
+            font-size: 1rem;
+        }
+        
+        .confidence-bar {
+            padding: 1rem;
+        }
+        
+        .class-scores {
+            padding: 1rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .upload-container {
+            padding: 1.5rem 0.5rem;
+        }
+        
+        .upload-icon {
+            font-size: 2.5rem;
+        }
+        
+        .upload-text h3 {
+            font-size: 1.2rem;
+        }
+        
+        .result-box h2 {
+            font-size: 1.3rem;
+        }
+        
+        .disclaimer {
+            padding: 1rem;
+        }
+        
+        .upload-another-btn {
+            padding: 0.8rem 1.5rem;
+            font-size: 1rem;
+            min-width: 180px;
+        }
+    }
+
+    /* Focus styles for accessibility */
+    .upload-container:focus {
+        outline: 2px solid #667eea;
+        outline-offset: 2px;
+    }
+
+    /* Upload Another Image Button Styling */
+    .upload-another-btn {
+        background: var(--primary-gradient);
+        border: none;
+        border-radius: 15px;
+        padding: 1rem 2rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        display: block;
+        margin: 2rem auto;
+        text-align: center;
+        text-decoration: none;
+        min-width: 200px;
+    }
+
+    .upload-another-btn:hover {
+        background: linear-gradient(135deg, #5a6fd8 0%, #764ba2 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .upload-another-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+    }
+
+    .upload-another-btn:focus {
+        outline: 2px solid #667eea;
+        outline-offset: 2px;
+    }
+
+    .upload-another-btn i {
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Mediscope AI - Pneumonia Detection</h1>
+    <p class="page-subtitle">Upload a chest X-ray image to get instant AI-powered pneumonia analysis</p>
+</div>
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Upload Area -->
+            <div class="upload-container" id="uploadContainer" tabindex="0" role="button" aria-label="Upload chest X-ray image">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt" aria-hidden="true"></i>
+                </div>
+                <div class="upload-text">
+                    <h3>📁 Upload Your Chest X-ray</h3>
+                    <p>Drag and drop or click to upload a chest X-ray image</p>
+                    <p style="font-size: 0.9rem; opacity: 0.7;">Supported formats: PNG, JPG, JPEG</p>
+                </div>
+                <input type="file" id="fileInput" class="file-input" accept="image/*" aria-label="Select image file">
+            </div>
+
+            <!-- Image Preview -->
+            <div id="imagePreview" style="display: none;">
+                <img id="previewImage" class="image-preview" alt="Chest X-ray preview">
+            </div>
+
+            <!-- Loading Analysis -->
+            <div id="loadingAnalysis" class="loading-analysis" style="display: none;">
+                <div class="analysis-spinner"></div>
+                <h4>Analyzing image...</h4>
+                <p>AI model is processing your chest X-ray for pneumonia detection</p>
+            </div>
+
+            <!-- Results -->
+            <div id="results" style="display: none;">
+                <!-- Results will be inserted here -->
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="disclaimer">
+                <h4><i class="fas fa-info-circle me-2"></i>Medical Disclaimer</h4>
+                <p>This is an AI demonstration tool for educational purposes only.</p>
+                <p><em>Not intended for medical diagnosis. Always consult qualified healthcare professionals for medical decisions.</em></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const uploadContainer = document.getElementById('uploadContainer');
+    const fileInput = document.getElementById('fileInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImage = document.getElementById('previewImage');
+    const loadingAnalysis = document.getElementById('loadingAnalysis');
+    const results = document.getElementById('results');
+
+    let isProcessing = false;
+
+    // Click to upload
+    uploadContainer.addEventListener('click', () => {
+        if (!isProcessing) {
+            fileInput.click();
+        }
+    });
+
+    // Keyboard support
+    uploadContainer.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && !isProcessing) {
+            e.preventDefault();
+            fileInput.click();
+        }
+    });
+
+    // Drag and drop
+    uploadContainer.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!isProcessing) {
+            uploadContainer.classList.add('dragover');
+        }
+    });
+
+    uploadContainer.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadContainer.classList.remove('dragover');
+    });
+
+    uploadContainer.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        uploadContainer.classList.remove('dragover');
+        
+        if (isProcessing) return;
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0 && !isProcessing) {
+            handleFile(e.target.files[0]);
+        }
+    });
+
+    function handleFile(file) {
+        // Validate file type
+        const allowedTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+        if (!allowedTypes.includes(file.type)) {
+            showError('Please select a valid image file (PNG, JPG, JPEG).');
+            return;
+        }
+
+        // Validate file size (max 16MB)
+        const maxSize = 16 * 1024 * 1024; // 16MB
+        if (file.size > maxSize) {
+            showError('File size too large. Please select an image smaller than 16MB.');
+            return;
+        }
+
+        isProcessing = true;
+
+        // Hide upload area
+        uploadContainer.style.display = 'none';
+
+        // Show image preview
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            imagePreview.style.display = 'block';
+            results.style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+
+        // Show loading
+        loadingAnalysis.style.display = 'block';
+
+        // Create FormData
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Send to server
+        fetch('/upload_image', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            loadingAnalysis.style.display = 'none';
+            
+            if (data.success) {
+                showResults(data);
+            } else {
+                showError(data.error || 'Analysis failed. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Error uploading image:', error);
+            loadingAnalysis.style.display = 'none';
+            showError('Network error. Please try again.');
+        })
+        .finally(() => {
+            isProcessing = false;
+        });
+    }
+
+    function showResults(data) {
+        const prediction = data.prediction.prediction;
+        const confidence = data.prediction.confidence_percentage;
+        const confidenceValue = data.prediction.confidence;
+        const classScores = data.prediction.class_scores || {};
+        
+        // Determine result styling based on prediction
+        let resultClass = '';
+        let resultIcon = '';
+        let resultTitle = '';
+        let resultMessage = '';
+        let riskLevel = '';
+        let riskClass = '';
+        
+        switch(prediction) {
+            case 'Normal':
+                resultClass = 'normal';
+                resultIcon = '✅';
+                resultTitle = 'NORMAL CHEST X-RAY';
+                resultMessage = 'No signs of pneumonia detected in this X-ray.';
+                break;
+            case 'Pneumonia':
+                resultClass = 'pneumonia';
+                resultIcon = '🔴';
+                resultTitle = 'PNEUMONIA DETECTED';
+                resultMessage = 'Pneumonia indicators detected. Please consult a healthcare professional.';
+                riskLevel = confidenceValue > 0.9 ? 'High Risk' : confidenceValue > 0.75 ? 'Medium Risk' : 'Low Risk';
+                riskClass = confidenceValue > 0.9 ? 'high' : '';
+                break;
+            default:
+                resultClass = 'unknown';
+                resultIcon = '❓';
+                resultTitle = 'UNKNOWN RESULT';
+                resultMessage = 'Unable to determine the result. Please consult a healthcare professional.';
+        }
+
+        const confidenceClass = confidenceValue > 0.8 ? 'high' : '';
+
+        // Create class scores display
+        let classScoresHTML = '';
+        if (Object.keys(classScores).length > 0) {
+            classScoresHTML = '<div class="class-scores"><h4>Detection Probabilities:</h4><ul>';
+            for (const [className, score] of Object.entries(classScores)) {
+                classScoresHTML += `<li>${className.charAt(0).toUpperCase() + className.slice(1)}: ${score.toFixed(1)}%</li>`;
+            }
+            classScoresHTML += '</ul></div>';
+        }
+
+        results.innerHTML = `
+            <div class="result-box ${resultClass}">
+                <h2>${resultIcon} ${resultTitle}</h2>
+                <p>${resultMessage}</p>
+                <p style="font-size: 1rem; color: #bdc3c7;">Confidence: ${confidence}</p>
+            </div>
+
+            <div class="confidence-bar">
+                <p style="margin-bottom: 0.5rem; font-weight: 600;">AI Confidence: ${confidence}</p>
+                <div class="confidence-fill ${confidenceClass}" style="width: ${confidenceValue * 100}%;"></div>
+            </div>
+
+            ${classScoresHTML}
+
+            ${riskLevel ? `
+            <div class="risk-level ${riskClass}">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                Risk Level: ${riskLevel}
+            </div>
+            ` : ''}
+
+            <button class="upload-another-btn" onclick="resetUpload()">
+                <i class="fas fa-upload"></i>Upload Another Image
+            </button>
+        `;
+
+        results.style.display = 'block';
+    }
+
+    function showError(message) {
+        results.innerHTML = `
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>${message}</span>
+            </div>
+            <button class="upload-another-btn" onclick="resetUpload()">
+                <i class="fas fa-upload"></i>Try Again
+            </button>
+        `;
+        results.style.display = 'block';
+    }
+
+    function resetUpload() {
+        uploadContainer.style.display = 'block';
+        imagePreview.style.display = 'none';
+        results.style.display = 'none';
+        loadingAnalysis.style.display = 'none';
+        fileInput.value = '';
+        isProcessing = false;
+    }
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+</script>
+{% endblock %}

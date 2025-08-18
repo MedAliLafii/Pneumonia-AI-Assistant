@@ -4,185 +4,76 @@ from PIL import Image
 import cv2
 import os
 import h5py
+from tensorflow.keras.optimizers import Adam
 
-class PneumoniaPredictor:
-    def __init__(self, model_path="models/improved_pneumonia_cnn.h5"):
+class MediscopePredictor:
+    def __init__(self, model_path="models/pneumonia_model.h5"):
         """
-        Initialize the pneumonia predictor with the trained CNN model.
+        Initialize the Mediscope AI predictor with the trained pneumonia detection CNN model.
         
         Args:
             model_path (str): Path to the trained CNN model file
         """
         self.model_path = model_path
         self.model = None
+        self.class_names = ['Pneumonia', 'Normal']  # Class 0: Pneumonia, Class 1: Normal
+        self.img_size = 150  # Model expects 150x150 images
         self.load_model()
         
     def load_model(self):
-        """Load the trained CNN model."""
+        """Load the trained pneumonia detection CNN model."""
         try:
-            # Check if model file exists (for Vercel deployment)
+            # Check if model file exists
             if not os.path.exists(self.model_path):
-                print(f"⚠️  Model file not found: {self.model_path}")
-                print("💡 This is expected in Vercel deployment. Model will be loaded on first use.")
+                print(f"❌ Model file not found: {self.model_path}")
+                print("Please ensure the trained model file is available in the models folder.")
                 self.model = None
                 return
             
-            # Try loading with custom_objects to handle compatibility issues
-            custom_objects = {}
+            # Load the model directly
+            self.model = tf.keras.models.load_model(self.model_path, compile=False)
             
-            # First attempt: Try loading with compile=False and custom DTypePolicy
-            try:
-                # Define a custom DTypePolicy for compatibility
-                class CompatibleDTypePolicy:
-                    def __init__(self, name='float32'):
-                        self.name = name
-                
-                custom_objects['DTypePolicy'] = CompatibleDTypePolicy
-                
-                self.model = tf.keras.models.load_model(
-                    self.model_path, 
-                    compile=False,
-                    custom_objects=custom_objects
-                )
-                print("✅ CNN model loaded successfully (with custom DTypePolicy)")
-                return
-            except Exception as e1:
-                print(f"⚠️  First attempt failed: {e1}")
-            
-            # Second attempt: Try loading with custom InputLayer and DTypePolicy
-            try:
-                # Define a custom InputLayer that ignores batch_shape
-                class CompatibleInputLayer(tf.keras.layers.InputLayer):
-                    def __init__(self, **kwargs):
-                        # Remove batch_shape if present
-                        if 'batch_shape' in kwargs:
-                            del kwargs['batch_shape']
-                        super().__init__(**kwargs)
-                
-                # Define a custom DTypePolicy for compatibility
-                class CompatibleDTypePolicy:
-                    def __init__(self, name='float32'):
-                        self.name = name
-                
-                custom_objects['InputLayer'] = CompatibleInputLayer
-                custom_objects['DTypePolicy'] = CompatibleDTypePolicy
-                
-                self.model = tf.keras.models.load_model(
-                    self.model_path, 
-                    compile=False,
-                    custom_objects=custom_objects
-                )
-                print("✅ CNN model loaded successfully (with custom InputLayer and DTypePolicy)")
-                return
-            except Exception as e2:
-                print(f"⚠️  Second attempt failed: {e2}")
-            
-            # Third attempt: Try loading with safe_mode
-            try:
-                self.model = tf.keras.models.load_model(
-                    self.model_path, 
-                    compile=False,
-                    safe_mode=True
-                )
-                print("✅ CNN model loaded successfully (safe_mode)")
-                return
-            except Exception as e3:
-                print(f"⚠️  Third attempt failed: {e3}")
-            
-            # Fourth attempt: Try loading weights only and reconstructing model
-            try:
-                # Load just the weights
-                with h5py.File(self.model_path, 'r') as f:
-                    # Check if model_weights exists
-                    if 'model_weights' in f:
-                        print("📦 Attempting to load weights and reconstruct model...")
-                        
-                        # Create a simple model architecture based on the weights
-                        self.model = self.create_compatible_model()
-                        
-                        # Load weights
-                        self.model.load_weights(self.model_path)
-                        print("✅ CNN model loaded successfully (weights reconstruction)")
-                        return
-            except Exception as e4:
-                print(f"⚠️  Fourth attempt failed: {e4}")
-            
-            # If all attempts fail, provide detailed error
-            raise Exception(f"All loading attempts failed. Last error: {e4 if 'e4' in locals() else e3 if 'e3' in locals() else e2 if 'e2' in locals() else e1}")
+            # Recompile with the correct settings to match training
+            self.model.compile(
+                optimizer=Adam(learning_rate=0.001),
+                loss='binary_crossentropy',
+                metrics=['accuracy', tf.keras.metrics.AUC(name='auc')]
+            )
+            print("✅ Pneumonia detection model loaded successfully")
             
         except Exception as e:
-            print(f"❌ Error loading CNN model: {e}")
-            print("💡 This might be due to TensorFlow version compatibility.")
-            print("   Try updating TensorFlow or using a compatible version.")
+            print(f"❌ Error loading pneumonia detection model: {e}")
+            print("Please ensure the model file is compatible and not corrupted.")
             self.model = None
     
-    def create_compatible_model(self):
-        """Create a compatible model architecture based on the saved weights."""
-        model = tf.keras.Sequential([
-            # Input layer
-            tf.keras.layers.Input(shape=(224, 224, 3)),
-            
-            # First conv block
-            tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.MaxPooling2D((2, 2)),
-            tf.keras.layers.Dropout(0.25),
-            
-            # Second conv block
-            tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.MaxPooling2D((2, 2)),
-            tf.keras.layers.Dropout(0.25),
-            
-            # Third conv block
-            tf.keras.layers.Conv2D(128, (3, 3), activation='relu'),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.MaxPooling2D((2, 2)),
-            tf.keras.layers.Dropout(0.25),
-            
-            # Fourth conv block
-            tf.keras.layers.Conv2D(256, (3, 3), activation='relu'),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.MaxPooling2D((2, 2)),
-            tf.keras.layers.Dropout(0.25),
-            
-            # Flatten and dense layers
-            tf.keras.layers.Flatten(),
-            tf.keras.layers.Dense(512, activation='relu'),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dropout(0.5),
-            tf.keras.layers.Dense(256, activation='relu'),
-            tf.keras.layers.BatchNormalization(),
-            tf.keras.layers.Dropout(0.5),
-            tf.keras.layers.Dense(1, activation='sigmoid')
-        ])
-        
-        return model
+
     
     def preprocess_image(self, image_path):
         """
-        Preprocess the input image for CNN prediction.
+        Preprocess image to match the model's expected input format.
         
         Args:
-            image_path (str): Path to the input image
+            image_path (str): Path to the image file
             
         Returns:
-            numpy.ndarray: Preprocessed image array
+            numpy.ndarray: Preprocessed image ready for prediction
         """
         try:
-            # Load and resize image
-            img = cv2.imread(image_path)
+            # Load image using OpenCV (grayscale)
+            img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+            
             if img is None:
-                raise ValueError("Could not load image")
+                print(f"❌ Could not load image: {image_path}")
+                return None
             
-            # Convert BGR to RGB
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # Resize to 150x150 (model's expected input size)
+            img = cv2.resize(img, (self.img_size, self.img_size))
             
-            # Resize to model input size (assuming 224x224, adjust if different)
-            img = cv2.resize(img, (224, 224))
-            
-            # Normalize pixel values
+            # Normalize pixel values to [0, 1]
             img = img.astype(np.float32) / 255.0
+            
+            # Add channel dimension to make it (150, 150, 1)
+            img = np.expand_dims(img, axis=-1)
             
             # Add batch dimension
             img = np.expand_dims(img, axis=0)
@@ -195,7 +86,7 @@ class PneumoniaPredictor:
     
     def predict(self, image_path):
         """
-        Predict pneumonia from chest X-ray image.
+        Predict pneumonia from chest X-ray image (binary classification).
         
         Args:
             image_path (str): Path to the chest X-ray image
@@ -227,26 +118,30 @@ class PneumoniaPredictor:
             # Make prediction
             prediction = self.model.predict(processed_img, verbose=0)
             
-            # Assuming binary classification: 0 = Normal, 1 = Pneumonia
-            # Adjust based on your model's output format
-            confidence = float(prediction[0][0]) if prediction.shape[1] == 1 else float(np.max(prediction))
+            # Get the probability (sigmoid output)
+            pneumonia_probability = float(prediction[0][0])
             
-            # Determine prediction class
-            if prediction.shape[1] == 1:
-                # Binary classification
-                predicted_class = "Pneumonia" if confidence > 0.5 else "Normal"
-                confidence = confidence if predicted_class == "Pneumonia" else 1 - confidence
+            # Determine predicted class (threshold 0.5)
+            if pneumonia_probability > 0.5:
+                predicted_class = "Pneumonia"
+                confidence = pneumonia_probability
             else:
-                # Multi-class classification
-                predicted_class = "Pneumonia" if np.argmax(prediction) == 1 else "Normal"
-                confidence = float(np.max(prediction))
+                predicted_class = "Normal"
+                confidence = 1 - pneumonia_probability
             
-            return {
+            # Create results dictionary
+            results = {
                 "prediction": predicted_class,
                 "confidence": confidence,
                 "confidence_percentage": f"{confidence * 100:.2f}%",
+                "class_scores": {
+                    "pneumonia": pneumonia_probability * 100,
+                    "normal": (1 - pneumonia_probability) * 100
+                },
                 "error": None
             }
+            
+            return results
             
         except Exception as e:
             return {
@@ -257,21 +152,23 @@ class PneumoniaPredictor:
     
     def get_prediction_summary(self, result):
         """
-        Generate a human-readable summary of the prediction results.
+        Get a summary of the prediction result.
         
         Args:
-            result (dict): Prediction result from predict() method
+            result (dict): Prediction result from predict method
             
         Returns:
-            str: Human-readable summary
+            str: Summary string
         """
         if result.get("error"):
-            return f"❌ Error: {result['error']}"
+            return f"Error: {result['error']}"
         
         prediction = result["prediction"]
         confidence = result["confidence_percentage"]
         
         if prediction == "Pneumonia":
-            return f"🔴 **Pneumonia Detected**\n\nConfidence: {confidence}\n\n⚠️ **Important**: This is an AI-assisted analysis. Please consult with a healthcare professional for proper diagnosis and treatment."
+            return f"⚠️ Pneumonia detected with {confidence} confidence. Please consult a healthcare professional."
+        elif prediction == "Normal":
+            return f"✅ Normal chest X-ray with {confidence} confidence."
         else:
-            return f"🟢 **Normal Chest X-ray**\n\nConfidence: {confidence}\n\n✅ The image appears to show a normal chest X-ray without signs of pneumonia."
+            return f"❓ Uncertain result with {confidence} confidence."
