@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 from PIL import Image
-import cv2
+# import cv2  # Removed OpenCV import
 import os
 import h5py
 from tensorflow.keras.optimizers import Adam
@@ -59,26 +59,29 @@ class MediscopePredictor:
             numpy.ndarray: Preprocessed image ready for prediction
         """
         try:
-            # Load image using OpenCV (grayscale)
-            img = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+            # Load image using PIL (grayscale)
+            img = Image.open(image_path).convert('L')  # Convert to grayscale
             
             if img is None:
                 print(f"❌ Could not load image: {image_path}")
                 return None
             
             # Resize to 150x150 (model's expected input size)
-            img = cv2.resize(img, (self.img_size, self.img_size))
+            img = img.resize((self.img_size, self.img_size), Image.Resampling.LANCZOS)
+            
+            # Convert to numpy array
+            img_array = np.array(img)
             
             # Normalize pixel values to [0, 1]
-            img = img.astype(np.float32) / 255.0
+            img_array = img_array.astype(np.float32) / 255.0
             
             # Add channel dimension to make it (150, 150, 1)
-            img = np.expand_dims(img, axis=-1)
+            img_array = np.expand_dims(img_array, axis=-1)
             
             # Add batch dimension
-            img = np.expand_dims(img, axis=0)
+            img_array = np.expand_dims(img_array, axis=0)
             
-            return img
+            return img_array
             
         except Exception as e:
             print(f"❌ Error preprocessing image: {e}")

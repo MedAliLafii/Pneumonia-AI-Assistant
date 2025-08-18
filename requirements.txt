@@ -19,9 +19,8 @@ pypdf
 # Environment and Configuration
 python-dotenv
 
-# Deep Learning and Computer Vision
-tensorflow
-opencv-python
+# Deep Learning (CPU only for deployment)
+tensorflow-cpu
 h5py
 
 # Image Processing
