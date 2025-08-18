@@ -2,23 +2,23 @@
 streamlit==1.48.1
 
 # LangChain and AI/ML (compatible versions)
-langchain==0.3.27
-langchain-community==0.3.27
-langchain-core==0.3.74
-langchain-google-genai==2.1.9
-langchain-huggingface==0.3.1
-langchain-text-splitters==0.3.9
+langchain
+langchain-community
+langchain-core
+langchain-google-genai
+langchain-huggingface
+langchain-text-splitters
 
 # Embeddings and Vector Store
-sentence-transformers==5.1.0
-transformers==4.55.2
-faiss-cpu==1.12.0
+sentence-transformers
+transformers
+faiss-cpu
 
 # HuggingFace Dependencies (required for langchain-huggingface)
-torch==2.8.0
-tokenizers==0.21.4
-safetensors==0.6.2
-huggingface-hub==0.34.4
+torch
+tokenizers
+safetensors
+huggingface-hub
 
 # Document Processing
 pypdf==3.17.4
@@ -27,7 +27,7 @@ pypdf==3.17.4
 python-dotenv==1.0.0
 
 # Deep Learning (CPU only for deployment)
-tensorflow-cpu==2.17.1
+tensorflow-cpu
 tf-keras==2.15.0
 h5py==3.10.0
 
@@ -36,17 +36,3 @@ pillow==10.1.0
 
 # Data Science (minimal for inference)
 numpy==1.26.4
-pandas==2.3.1
-scikit-learn==1.7.1
-
-# Additional dependencies for stability
-requests==2.32.4
-urllib3==2.5.0
-
-# Standard library dependencies (these are built-in, but listed for completeness)
-# uuid - built-in
-# os - built-in  
-# tempfile - built-in
-# datetime - built-in
-# io - built-in
-# typing - built-in
