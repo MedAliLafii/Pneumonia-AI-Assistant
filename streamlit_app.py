@@ -384,7 +384,7 @@ def chatbot_page():
                     st.caption(f"🕐 {current_time}")
                     
                 except Exception as e:
-                    error_msg = f"❌ Error: {str(e)}"
+                    error_msg = "I'm sorry, I encountered an error. Please try again."
                     error_message = {
                         "role": "assistant", 
                         "content": error_msg,
