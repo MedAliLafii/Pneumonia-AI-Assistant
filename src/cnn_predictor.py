@@ -1,10 +1,25 @@
-import tensorflow as tf
+import os
 import numpy as np
 from PIL import Image
 # import cv2  # Removed OpenCV import
-import os
 import h5py
-from tensorflow import keras
+
+# Configure environment before importing TensorFlow
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+os.environ['TF_ENABLE_DEPRECATION_WARNINGS'] = '0'
+
+# Try to import TensorFlow with error handling
+try:
+    import tensorflow as tf
+    from tensorflow import keras
+    TENSORFLOW_AVAILABLE = True
+    print("✅ TensorFlow imported successfully")
+except Exception as e:
+    print(f"⚠️ TensorFlow import failed: {e}")
+    TENSORFLOW_AVAILABLE = False
+    tf = None
+    keras = None
 
 class MediscopePredictor:
     def __init__(self, model_path="models/pneumonia_model.h5"):
@@ -18,7 +33,13 @@ class MediscopePredictor:
         self.model = None
         self.class_names = ['Pneumonia', 'Normal']  # Class 0: Pneumonia, Class 1: Normal
         self.img_size = 150  # Model expects 150x150 images
+        self.tensorflow_available = TENSORFLOW_AVAILABLE
         
+        if not TENSORFLOW_AVAILABLE:
+            print("❌ TensorFlow is not available. Model loading will be skipped.")
+            print("💡 The app will run in limited mode - only chatbot functionality will be available.")
+            return
+            
         # Force CPU usage for deployment compatibility
         self._configure_tensorflow()
         self.load_model()
@@ -48,6 +69,10 @@ class MediscopePredictor:
         
     def load_model(self):
         """Load the trained pneumonia detection CNN model."""
+        if not TENSORFLOW_AVAILABLE:
+            print("❌ Cannot load model: TensorFlow is not available")
+            return
+            
         try:
             # Check if model file exists
             if not os.path.exists(self.model_path):
@@ -150,8 +175,15 @@ class MediscopePredictor:
                 print("❌ No fallback model available. Please run create_fallback_model.py")
                 self.model = None
     
+    def is_model_available(self):
+        """
+        Check if the model is available for predictions.
+        
+        Returns:
+            bool: True if model is available, False otherwise
+        """
+        return self.model is not None and TENSORFLOW_AVAILABLE
 
-    
     def preprocess_image(self, image_path):
         """
         Preprocess image to match the model's expected input format.
@@ -201,6 +233,14 @@ class MediscopePredictor:
         Returns:
             dict: Prediction results with confidence scores
         """
+        # Check if TensorFlow is available
+        if not TENSORFLOW_AVAILABLE:
+            return {
+                "error": "TensorFlow is not available. Model prediction is not supported in this environment.",
+                "prediction": None,
+                "confidence": 0.0
+            }
+        
         # Try to load model if not already loaded
         if self.model is None:
             self.load_model()

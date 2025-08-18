@@ -204,6 +204,12 @@ def cnn_page():
     """CNN Pneumonia Detection Page"""
     st.markdown('<h1 class="main-header">🔬 Pneumonia Detection</h1>', unsafe_allow_html=True)
     
+    # Check TensorFlow availability and show status
+    if st.session_state.mediscope_predictor and not st.session_state.mediscope_predictor.is_model_available():
+        st.warning("⚠️ **Limited Mode**: TensorFlow is not available in this environment. Pneumonia detection is disabled.")
+        st.info("💡 You can still use the medical assistant chatbot for general medical questions and information.")
+        st.markdown("---")
+    
     # Center the content
     st.markdown('<div class="centered-content">', unsafe_allow_html=True)
     
@@ -242,6 +248,9 @@ def cnn_page():
         if st.button("🔬 Analyze Image", type="primary", use_container_width=True):
                 if st.session_state.mediscope_predictor is None:
                     st.error("❌ Model not available. Please try again later.")
+                elif not st.session_state.mediscope_predictor.is_model_available():
+                    st.error("❌ TensorFlow is not available in this environment. Pneumonia detection is not supported.")
+                    st.info("💡 You can still use the medical assistant chatbot for general medical questions.")
                 else:
                     with st.spinner("Analyzing image..."):
                         try:

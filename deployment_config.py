@@ -4,6 +4,7 @@ This file contains deployment-specific settings and environment variable configu
 """
 
 import os
+import sys
 
 def configure_deployment_environment():
     """
@@ -27,7 +28,35 @@ def configure_deployment_environment():
     os.environ["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
     os.environ["TF_GPU_ALLOCATOR"] = "cpu"
     
+    # Disable TensorFlow library loading issues
+    os.environ["TF_DISABLE_SEGMENT_REDUCTION_OP_DETERMINISM_EXCEPTIONS"] = "true"
+    
+    # Set Python path to avoid import issues
+    if os.path.dirname(__file__) not in sys.path:
+        sys.path.insert(0, os.path.dirname(__file__))
+    
+    # Additional deployment settings
+    os.environ["PYTHONPATH"] = os.path.dirname(__file__)
+    
     print("✅ Deployment environment configured")
+
+def check_tensorflow_availability():
+    """
+    Check if TensorFlow can be imported safely.
+    Returns True if TensorFlow is available, False otherwise.
+    """
+    try:
+        # Configure environment before import
+        os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
+        os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+        
+        import tensorflow as tf
+        print("✅ TensorFlow is available")
+        return True
+    except Exception as e:
+        print(f"⚠️ TensorFlow is not available: {e}")
+        return False
 
 if __name__ == "__main__":
     configure_deployment_environment()
+    check_tensorflow_availability()
