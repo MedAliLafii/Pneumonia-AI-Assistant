@@ -86,8 +86,10 @@ class MediscopePredictor:
                 return
             
             st.success(f"✅ Model file validation passed: {validation_message}")
-            file_size = os.path.getsize(self.model_path)
-            st.info(f"📁 File size: {file_size} bytes")
+            
+            # Get file size for display
+            model_file_size = os.path.getsize(self.model_path)
+            st.info(f"📁 File size: {model_file_size} bytes")
             
             # Try loading with custom objects to handle compatibility issues
             st.info("🔄 Loading model with compatibility fixes...")
