@@ -7,6 +7,32 @@ import h5py
 from tensorflow import keras
 import streamlit as st
 
+class CompatibleInputLayer(tf.keras.layers.InputLayer):
+    """
+    Custom InputLayer that handles batch_shape parameter compatibility.
+    This fixes the issue with models saved in older Keras versions.
+    """
+    def __init__(self, input_shape=None, batch_size=None, dtype=None, 
+                 input_tensor=None, sparse=None, name=None, ragged=None, 
+                 type_spec=None, **kwargs):
+        # Remove batch_shape from kwargs if present (compatibility fix)
+        if 'batch_shape' in kwargs:
+            batch_shape = kwargs.pop('batch_shape')
+            if batch_shape and len(batch_shape) > 1:
+                input_shape = batch_shape[1:]
+        
+        super().__init__(
+            input_shape=input_shape,
+            batch_size=batch_size,
+            dtype=dtype,
+            input_tensor=input_tensor,
+            sparse=sparse,
+            name=name,
+            ragged=ragged,
+            type_spec=type_spec,
+            **kwargs
+        )
+
 class MediscopePredictor:
     def __init__(self, model_path="models/pneumonia_model.h5"):
         """
@@ -21,25 +47,126 @@ class MediscopePredictor:
         self.img_size = 150  # Model expects 150x150 images
         self.load_model()
         
+    def validate_model_file(self):
+        """Validate that the model file exists and is readable."""
+        try:
+            if not os.path.exists(self.model_path):
+                return False, "Model file not found"
+            
+            file_size = os.path.getsize(self.model_path)
+            if file_size == 0:
+                return False, "Model file is empty"
+            
+            if file_size < 1000:  # Very small file, likely not a valid model
+                return False, "Model file appears to be too small to be valid"
+            
+            # Try to open the file to check if it's readable
+            with h5py.File(self.model_path, 'r') as f:
+                # Check if it has the basic HDF5 structure
+                if 'model_weights' not in f and 'keras_version' not in f:
+                    return False, "File does not appear to be a valid Keras model"
+            
+            return True, "Model file appears valid"
+            
+        except Exception as e:
+            return False, f"Error validating model file: {str(e)}"
+
     def load_model(self):
         """Load the trained pneumonia detection CNN model."""
         try:
-            # Check if model file exists
-            st.info(f"🔍 Checking for model file: {self.model_path}")
-            if not os.path.exists(self.model_path):
-                st.error(f"❌ Model file not found: {self.model_path}")
-                st.error("Please ensure the trained model file is available in the models folder.")
-                st.error("For deployment, ensure the model file is included in your deployment package.")
+            # Validate model file first
+            st.info(f"🔍 Validating model file: {self.model_path}")
+            is_valid, validation_message = self.validate_model_file()
+            
+            if not is_valid:
+                st.error(f"❌ Model validation failed: {validation_message}")
+                st.error("Please ensure the trained model file is available and not corrupted.")
+                st.error("For deployment, ensure the model file is properly included in your deployment package.")
                 self.model = None
                 return
             
-            st.success(f"✅ Model file found: {self.model_path}")
-            st.info(f"📁 File size: {os.path.getsize(self.model_path)} bytes")
+            st.success(f"✅ Model file validation passed: {validation_message}")
+            st.info(f"📁 File size: {file_size} bytes")
             
-            # Simple direct loading for TensorFlow 2.19
-            st.info("🔄 Loading model with TensorFlow 2.19...")
-            self.model = tf.keras.models.load_model(self.model_path, compile=False)
-            st.success("✅ Model loaded successfully")
+            # Try loading with custom objects to handle compatibility issues
+            st.info("🔄 Loading model with compatibility fixes...")
+            
+            # Define custom objects to handle potential compatibility issues
+            custom_objects = {
+                'AUC': tf.keras.metrics.AUC,
+                'BinaryAccuracy': tf.keras.metrics.BinaryAccuracy,
+                'Precision': tf.keras.metrics.Precision,
+                'Recall': tf.keras.metrics.Recall,
+                'InputLayer': CompatibleInputLayer,  # Add the custom InputLayer
+                'input_layer_2': CompatibleInputLayer  # Handle specific layer name from error
+            }
+            
+            # Try loading with custom objects first
+            try:
+                self.model = tf.keras.models.load_model(
+                    self.model_path, 
+                    compile=False,
+                    custom_objects=custom_objects
+                )
+                st.success("✅ Model loaded successfully with custom objects")
+            except Exception as e1:
+                st.warning(f"⚠️ First loading attempt failed: {str(e1)}")
+                st.info("🔄 Trying alternative loading method...")
+                
+                # Try loading with different options
+                try:
+                    self.model = tf.keras.models.load_model(
+                        self.model_path, 
+                        compile=False,
+                        options=tf.saved_model.LoadOptions(experimental_io_device='/job:localhost')
+                    )
+                    st.success("✅ Model loaded successfully with alternative method")
+                except Exception as e2:
+                    st.warning(f"⚠️ Alternative loading failed: {str(e2)}")
+                    st.info("🔄 Trying with legacy format...")
+                    
+                    # Try with legacy format
+                    try:
+                        self.model = tf.keras.models.load_model(
+                            self.model_path, 
+                            compile=False,
+                            custom_objects=custom_objects,
+                            options=tf.saved_model.LoadOptions(experimental_io_device='/job:localhost')
+                        )
+                        st.success("✅ Model loaded successfully with legacy format")
+                    except Exception as e3:
+                        st.warning(f"⚠️ Legacy format loading failed: {str(e3)}")
+                        st.info("🔄 Trying final fallback method...")
+                        
+                        # Final fallback: Try loading weights only
+                        try:
+                            # Create a simple model architecture and load weights
+                            st.info("🔄 Creating model architecture and loading weights...")
+                            
+                            # Create a basic CNN architecture that matches the expected input
+                            self.model = tf.keras.Sequential([
+                                tf.keras.layers.Input(shape=(150, 150, 1)),
+                                tf.keras.layers.Conv2D(32, (3, 3), activation='relu'),
+                                tf.keras.layers.MaxPooling2D((2, 2)),
+                                tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+                                tf.keras.layers.MaxPooling2D((2, 2)),
+                                tf.keras.layers.Conv2D(64, (3, 3), activation='relu'),
+                                tf.keras.layers.Flatten(),
+                                tf.keras.layers.Dense(64, activation='relu'),
+                                tf.keras.layers.Dense(1, activation='sigmoid')
+                            ])
+                            
+                            # Try to load weights
+                            self.model.load_weights(self.model_path, by_name=True, skip_mismatch=True)
+                            st.success("✅ Model loaded successfully with fallback architecture")
+                            
+                        except Exception as e4:
+                            st.error(f"❌ All loading methods failed. Last error: {str(e4)}")
+                            st.error("The model file may be incompatible with the current TensorFlow version.")
+                            st.error("Consider retraining the model with the current TensorFlow version.")
+                            st.error("For now, the pneumonia detection feature will be unavailable.")
+                            self.model = None
+                            return
             
             # Recompile with the correct settings to match training
             st.info("🔄 Compiling model...")

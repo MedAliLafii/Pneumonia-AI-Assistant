@@ -37,6 +37,7 @@ requests==2.32.3
 urllib3==2.3.0
 
 # Deep Learning (CPU only for deployment) - Keras 3.x compatible
+# Note: Model compatibility fixes included in cnn_predictor.py for older model formats
 tensorflow-cpu==2.19.0
 keras==3.10.0
 tf-keras==2.19.0
