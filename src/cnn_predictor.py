@@ -5,6 +5,7 @@ from PIL import Image
 import os
 import h5py
 from tensorflow import keras
+import streamlit as st
 
 class MediscopePredictor:
     def __init__(self, model_path="models/pneumonia_model.h5"):

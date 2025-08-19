@@ -39,6 +39,7 @@ urllib3==2.3.0
 # Deep Learning (CPU only for deployment) - Keras 3.x compatible
 tensorflow-cpu==2.19.0
 keras==3.10.0
+tf-keras==2.19.0
 protobuf==4.25.3
 tensorboard==2.19.0
 absl-py==2.1.0
